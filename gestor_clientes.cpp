@@ -1,7 +1,6 @@
 // ABM de usuarios
 #include <iostream>
 #include <fstream>
-#include <vector>
 #include <string>
 using namespace std;
 
@@ -64,12 +63,12 @@ void saveUserDB(Client newClient)
 {
     Client clients[1];
     clients[0] = newClient;
-    // Client fede;
-    // fede.dni = 23123;
-    // fede.name = "djfsdf";
-    // fede.lastname = "asdasdas";
-    // fede.user = "fmga";
-    // fede.pass = "1234";
+    // Client usuario;
+    // usuario.dni = 99999999;
+    // usuario.name = "nombre";
+    // usuario.lastname = "apellido";
+    // usuario.user = "usuario";
+    // usuario.pass = "12345678";
 
     FILE *file = fopen("userDB.txt", "a+");
     if (file != NULL)
