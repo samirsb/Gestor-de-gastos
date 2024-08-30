@@ -1,16 +1,14 @@
 // ABM de usuarios
 #include <iostream>
-#include <fstream>
-#include <string>
 using namespace std;
 
 struct Client
 {
     int dni;
-    string name;
-    string lastname;
-    string user;
-    string pass;
+    char name[20];
+    char lastname[20];
+    char user[12];
+    char pass[9];
 };
 
 bool validatePass(string input, string input2)
@@ -58,31 +56,41 @@ string enterPass()
     return input1;
 }
 
+int checkUser(int searchUser)
+{
+    FILE *file = fopen("userDB.dat", "rb");
+    if (file != NULL)
+    {
+        Client newClient;
+        while (fread(&newClient, sizeof(Client), 1, file) == 1)
+        {
+            if (newClient.dni == searchUser)
+            {
+                cout << "Cliente ya registrado" << endl;
+                fclose(file);
+                return 1;
+            }
+        }
+        fclose(file);
+    }
+    else
+    {
+        cout << "No se pudo abrir el archivo para lectura" << endl;
+    }
+    return 0;
+}
+
 void saveUserDB(Client newClient)
 
 {
     Client clients[1];
     clients[0] = newClient;
-    // Client usuario;
-    // usuario.dni = 99999999;
-    // usuario.name = "nombre";
-    // usuario.lastname = "apellido";
-    // usuario.user = "usuario";
-    // usuario.pass = "12345678";
 
-    FILE *file = fopen("userDB.txt", "a+");
+    FILE *file = fopen("userDB.dat", "ab");
     if (file != NULL)
     {
-        for (Client &client : clients)
-        {
-            fprintf(file, "%d,%s,%s,%s,%s\n",
-                    client.dni,
-                    // c_str() convierte de string a char*, los archivos se deben escribir en char*
-                    client.name.c_str(),
-                    client.lastname.c_str(),
-                    client.user.c_str(),
-                    client.pass.c_str());
-        }
+        fwrite(clients, sizeof(Client), 1, file);
+        fclose(file);
         cout << "Archivo creado exitosamente." << endl;
     }
     else
@@ -93,29 +101,32 @@ void saveUserDB(Client newClient)
 
 Client registration()
 {
-    // Se instancia el struct para registro de nuevo cliente
     Client newClient;
 
     cout << "Ingrese su numero de DNI, sin puntos ni espacios" << endl;
     cin >> newClient.dni;
 
-    // agregar validacion para verificar si el DNI ingresado existe dentro del archivo userDB.txt, si existe se debera salir del proceso.
+    if (!checkUser(newClient.dni))
+    {
+        cout << "Ingrese su nombre" << endl;
+        cin.ignore();
+        cin.getline(newClient.name, sizeof(newClient.name));
 
-    cout << "Ingrese su nombre" << endl;
-    cin >> newClient.name;
+        cout << "Ingrese su apellido" << endl;
+        cin.getline(newClient.lastname, sizeof(newClient.lastname));
 
-    cout << "Ingrese su apellido" << endl;
-    cin >> newClient.lastname;
+        cout << "Ingrese su usuario" << endl;
+        cin.getline(newClient.user, sizeof(newClient.user));
 
-    cout << "Ingrese su usuario" << endl;
-    cin >> newClient.user;
+        string password = enterPass();
+        strcpy(newClient.pass, password.c_str()); // convierte de string a char
 
-    newClient.pass = enterPass();
+        // Para asignacion automatica de saldo inicial deber llamar a analista.cpp y pasar por parametro para registro de transaccion
 
-    // Para asignacion automatica de saldo inicial deber llamar a analista.cpp y pasar por parametro para registro de transaccion
+        saveUserDB(newClient);
 
-    saveUserDB(newClient);
-
+        return newClient;
+    }
     return newClient;
 }
 
