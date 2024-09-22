@@ -192,7 +192,9 @@ Client registration()
         cout << "Su usuario ha sido registrado" << endl
              << "Por su registro se le otorgara una bonificación de 10.000$" << endl
              << "Por favor ingrese nuevamente su usuario" << endl;
+        cin.ignore();
         cin.getline(newTransaction.user, sizeof(newTransaction.user));
+
         newTransaction.id = 1;
         newTransaction.amount = 10000;
         newTransaction.date = 22092024;
