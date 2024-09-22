@@ -1,4 +1,5 @@
 // ABM de usuarios
+#include <_string.h>
 #include <iostream>
 using namespace std;
 
@@ -11,52 +12,77 @@ struct Client
     char pass[9];
 };
 
-bool validatePass(string input, string input2)
+struct Transaction
 {
-    if (input.length() != 8 || input != input2)
+    int id;
+    char user[12];
+    int amount;
+    int date;
+};
+
+bool validatePass(char pass1[9], char pass2[9])
+{
+    int passSize = 0;
+    while (pass1[passSize] != '\0' && passSize < 9)
     {
-        return false;
-    }
-
-    bool hasNumber = false;
-    bool hasUpper = false;
-
-    for (char pass : input)
-    {
-        if (isupper(pass))
+        if (pass1[passSize] == pass2[passSize])
         {
-            hasUpper = true;
+            passSize++;
         }
-        else if (isdigit(pass))
+        else
         {
-            hasNumber = true;
-        }
-
-        if (hasUpper && hasNumber)
-        {
+            cout << "Las contraseñas no coinciden" << endl;
             break;
         }
     }
-    return hasUpper && hasNumber;
+
+    if (passSize != 8)
+    {
+        return false;
+    }
+    else
+    {
+        bool hasNumber = false;
+        bool hasUpper = false;
+
+        for (int i = 0; i < passSize; i++)
+        {
+            if (isupper(pass1[i]))
+            {
+                hasUpper = true;
+            }
+            else if (isdigit(pass1[i]))
+            {
+                hasNumber = true;
+            }
+
+            if (hasUpper && hasNumber)
+            {
+                break;
+            }
+        }
+        return hasUpper && hasNumber;
+    }
 }
 
-string enterPass()
+char *enterPass()
 {
-    string input1;
-    string input2;
+    static char pass1[9];
+    char pass2[9];
     bool isValid = false;
     do
     {
         cout << "Ingrese su contraseña\n  - Debe ser de 8 caracteres\n  - Debe tener al menos una letra mayuscula\n  - Debe tener al menos un numero" << endl;
-        cin >> input1;
+        cin >> pass1;
         cout << "Ingrese nuevamente su contraseña" << endl;
-        cin >> input2;
-        isValid = validatePass(input1, input2);
+        cin >> pass2;
+        isValid = validatePass(pass1, pass2);
     } while (isValid == false);
-    return input1;
-}
 
-int checkUser(int searchUser)
+    return pass1;
+};
+
+int checkDni(int searchDni)
 {
     FILE *file = fopen("userDB.dat", "rb");
     if (file != NULL)
@@ -64,7 +90,7 @@ int checkUser(int searchUser)
         Client newClient;
         while (fread(&newClient, sizeof(Client), 1, file) == 1)
         {
-            if (newClient.dni == searchUser)
+            if (newClient.dni == searchDni)
             {
                 cout << "Cliente ya registrado" << endl;
                 fclose(file);
@@ -80,8 +106,31 @@ int checkUser(int searchUser)
     return 0;
 }
 
-void saveUserDB(Client newClient)
+int checkUser(const char *searchUser)
+{
+    FILE *file = fopen("userDB.dat", "rb");
+    if (file != NULL)
+    {
+        Client newClient;
+        while (fread(&newClient, sizeof(newClient), 1, file) == 1)
+        {
+            if (strcmp(newClient.user, searchUser) == 0)
+            {
+                cout << "Estudiante encontrado:" << endl;
+                fclose(file);
+                return 1;
+            }
+        }
+        fclose(file);
+    }
+    else
+    {
+        cout << "No se pudo abrir el archivo para lectura." << endl;
+    }
+    return 0;
+}
 
+void saveUserDB(Client newClient)
 {
     Client clients[1];
     clients[0] = newClient;
@@ -99,14 +148,33 @@ void saveUserDB(Client newClient)
     }
 };
 
+void saveTransactionDB(Transaction newTransaction)
+{
+    Transaction transactions[1];
+    transactions[0] = newTransaction;
+
+    FILE *file = fopen("transactionDB.dat", "ab");
+    if (file != NULL)
+    {
+        fwrite(transactions, sizeof(Transaction), 1, file);
+        fclose(file);
+        cout << "Archivo creado exitosamente." << endl;
+    }
+    else
+    {
+        cout << "No se pudo crear el archivo." << endl;
+    }
+};
+
 Client registration()
 {
     Client newClient;
+    Transaction newTransaction;
 
     cout << "Ingrese su numero de DNI, sin puntos ni espacios" << endl;
     cin >> newClient.dni;
 
-    if (!checkUser(newClient.dni))
+    if (!checkDni(newClient.dni))
     {
         cout << "Ingrese su nombre" << endl;
         cin.ignore();
@@ -118,12 +186,19 @@ Client registration()
         cout << "Ingrese su usuario" << endl;
         cin.getline(newClient.user, sizeof(newClient.user));
 
-        string password = enterPass();
-        strcpy(newClient.pass, password.c_str()); // convierte de string a char
+        char *password = enterPass();
+        strcpy(newClient.pass, password);
 
-        // Para asignacion automatica de saldo inicial deber llamar a analista.cpp y pasar por parametro para registro de transaccion
+        cout << "Su usuario ha sido registrado" << endl
+             << "Por su registro se le otorgara una bonificación de 10.000$" << endl
+             << "Por favor ingrese nuevamente su usuario" << endl;
+        cin.getline(newTransaction.user, sizeof(newTransaction.user));
+        newTransaction.id = 1;
+        newTransaction.amount = 10000;
+        newTransaction.date = 22092024;
 
         saveUserDB(newClient);
+        saveTransactionDB(newTransaction);
 
         return newClient;
     }
