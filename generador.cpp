@@ -2,6 +2,7 @@
 #include <_string.h>
 #include <iostream>
 #include <cstring>
+#include <stdio.h>
 using namespace std;
 
 struct Client
@@ -130,10 +131,6 @@ void GestionarTransaccion(Client cliente)
     }
 }
 
-void EliminarTransaccionPorID()
-{
-}
-
 int mostrarTransaccion()
 {
     FILE *archivo = fopen("transactionDB.dat", "rb");
@@ -155,6 +152,53 @@ int mostrarTransaccion()
     }
     return 0;
 }
+
+void EliminarTransaccionPorID()
+{
+    FILE *archivo = fopen("transactionDB.dat", "rb");
+    FILE *archivoTemporal = fopen("tempTransactionDB.dat", "wb");
+    if (archivo != NULL)
+    {
+        Transaction transaccion;
+        int id;
+        bool encontrado;
+        cout << "Ingrese el ID de la transaccion que desea eliminar: " << endl;
+        cin >> id;
+
+        while (fread(&transaccion, sizeof(transaccion), 1, archivo) == 1)
+        {
+            cout << "entro al while " << id << transaccion.id << endl;
+            if (transaccion.id == id)
+            {
+                cout << "entro al if " << endl;
+                // Si el ID coincide, no copiar esta transacción al archivo temporal
+                encontrado = true;
+            }
+            else
+            {
+                cout << "entro al else " << endl;
+                // Si el ID no coincide, copiamos la transacción al archivo temporal
+                fwrite(&transaccion, sizeof(Transaction), 1, archivoTemporal);
+            }
+        }
+        fclose(archivo);
+        fclose(archivoTemporal);
+
+        if (encontrado)
+        {
+            // Reemplazar el archivo original por el archivo temporal
+            remove("transactionDB.dat");
+            rename("tempTransactionDB.dat", "transactionDB.dat");
+            cout << "La transacción ha sido eliminada con éxito." << endl;
+        }
+        else
+        {
+            // Si no se encontró el ID, eliminar el archivo temporal
+            remove("tempDB.dat");
+            cout << "No se encontró ninguna transacción con el ID proporcionado." << endl;
+        }
+    }
+};
 
 int main()
 {
@@ -183,6 +227,9 @@ int main()
             break;
         case 'n':
             cout << "El usuario ha decidido no realizar ninguna transaccion. Salir" << endl;
+            break;
+        case 'e':
+            EliminarTransaccionPorID();
             break;
         default:
             cout << "Caracter invalido." << endl;
