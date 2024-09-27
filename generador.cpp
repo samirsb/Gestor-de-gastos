@@ -1,10 +1,9 @@
-// Gestor de transacciones para el cliente final
-#include <_string.h>
+// Gestor de transacciones para el cliente final --> Diego
 #include <iostream>
 #include <cstring>
-#include <stdio.h>
+#include <_stdio.h>
+#include <_string.h>
 using namespace std;
-
 struct Client
 {
     int dni;
@@ -54,17 +53,20 @@ float calcularSaldoUsuario(const char *usuarioBuscado)
     Transaction transaccion;
     float saldoTotal = 0;
 
+    if (archivo == NULL)
+    {
+        cout << "No se pudo abrir el archivo para lectura." << endl;
+        return 0;
+    }
+
     while (fread(&transaccion, sizeof(transaccion), 1, archivo) == 1)
     {
         if (strcmp(transaccion.user, usuarioBuscado) == 0)
         {
             saldoTotal += transaccion.amount;
         }
-        else
-        {
-            break;
-        }
     }
+
     fclose(archivo);
     return saldoTotal;
 }
@@ -72,17 +74,50 @@ float calcularSaldoUsuario(const char *usuarioBuscado)
 int CalcularID()
 {
     FILE *archivo = fopen("transactionDB.dat", "rb");
-    int mayor;
+    int mayor = 0;
     Transaction transaccion;
+
+    if (archivo == NULL)
+    {
+        cout << "Archivo no encontrado." << endl;
+        return -1;
+    }
+
     while (fread(&transaccion, sizeof(Transaction), 1, archivo) == 1)
     {
-        mayor = transaccion.id;
         if (transaccion.id > mayor)
         {
             mayor = transaccion.id;
         }
     }
+
+    fclose(archivo);
     return mayor + 1;
+}
+
+int mostrarTransaccion(const char *usuarioActual)
+{
+    FILE *archivo = fopen("transactionDB.dat", "rb");
+    if (archivo != NULL)
+    {
+        Transaction transaccion;
+        cout << "Transacciones del usuario: " << usuarioActual << endl;
+        while (fread(&transaccion, sizeof(Transaction), 1, archivo) == 1)
+        {
+            if (strcmp(transaccion.user, usuarioActual) == 0)
+            {
+                cout << "ID: " << transaccion.id << endl;
+                cout << "Cantidad: " << transaccion.amount << endl;
+                cout << "Fecha: " << transaccion.date << endl;
+            }
+        }
+        fclose(archivo);
+    }
+    else
+    {
+        cout << "No se pudo abrir el archivo para lectura." << endl;
+    }
+    return 0;
 }
 
 void GestionarTransaccion(Client cliente)
@@ -92,65 +127,42 @@ void GestionarTransaccion(Client cliente)
     float monto;
     int fecha;
     Transaction transaccion;
-    bool continuar = 1;
-    while (continuar == 1)
-    {
-        cout << "Desea realizar una transaccion de ingreso o egreso de dinero?" << endl
-             << "i: ingreso / e: egreso" << endl;
-        cin >> tipo;
-        switch (tipo)
-        {
-        case 'i':
-            cout << "Monto a ingresar: " << endl;
-            cin >> monto;
-            cout << "Fecha del ingreso (AAAAMMDD):" << endl;
-            cin >> fecha;
-            break;
-        case 'e':
-            cout << "Monto a egresar: " << endl;
-            cin >> monto;
-            cout << "Fecha del egreso (AAAAMMDD):" << endl;
-            cin >> fecha;
-            monto *= -1;
-            break;
-        default:
-            cout << "Caracter invalido." << endl;
-            break;
-        }
-        transaccion.id = CalcularID();
-        cout << "Por favor ingrese nuevamente su usuario para confirmar la transacción" << endl;
-        cin.ignore();
-        cin.getline(transaccion.user, sizeof(transaccion.user));
-        transaccion.amount = monto;
-        transaccion.date = fecha;
 
-        fwrite(&transaccion, sizeof(Transaction), 1, archivo);
-        cout << "Desea realizar otra transaccion? (0 = No / 1 = Si)" << endl;
-        cin >> continuar;
-        cin.ignore();
-    }
-}
+    cout << "Desea realizar una transaccion de ingreso o egreso de dinero?" << endl
+         << "i: ingreso / e: egreso" << endl;
+    cin >> tipo;
 
-int mostrarTransaccion()
-{
-    FILE *archivo = fopen("transactionDB.dat", "rb");
-    if (archivo != NULL)
+    switch (tipo)
     {
-        Transaction transaccion;
-        while (fread(&transaccion, sizeof(Transaction), 1, archivo) == 1)
-        {
-            cout << "ID: " << transaccion.id << endl;
-            cout << "Usuario: " << transaccion.user << endl;
-            cout << "Cantidad: " << transaccion.amount << endl;
-            cout << "Fecha: " << transaccion.date << endl;
-        }
-        fclose(archivo);
+    case 'i':
+        cout << "Monto a ingresar: " << endl;
+        cin >> monto;
+        cout << "Fecha del ingreso (AAAAMMDD):" << endl;
+        cin >> fecha;
+        break;
+    case 'e':
+        cout << "Monto a egresar: " << endl;
+        cin >> monto;
+        cout << "Fecha del egreso (AAAAMMDD):" << endl;
+        cin >> fecha;
+        monto *= -1;
+        break;
+    default:
+        cout << "Caracter invalido." << endl;
+        return;
     }
-    else
-    {
-        cout << "No se pudo abrir el archivo para lectura." << endl;
-    }
-    return 0;
+
+    transaccion.id = CalcularID();
+    cout << "Por favor ingrese nuevamente su usuario para confirmar la transacción" << endl;
+    cin.ignore();
+    cin.getline(transaccion.user, sizeof(transaccion.user));
+    transaccion.amount = monto;
+    transaccion.date = fecha;
+
+    fwrite(&transaccion, sizeof(Transaction), 1, archivo);
+    fclose(archivo);
+
+    cout << "Transacción realizada con éxito. Para realizar otra, debe salir y volver a ingresar." << endl;
 }
 
 void EliminarTransaccionPorID()
@@ -167,17 +179,12 @@ void EliminarTransaccionPorID()
 
         while (fread(&transaccion, sizeof(transaccion), 1, archivo) == 1)
         {
-            cout << "entro al while " << id << transaccion.id << endl;
             if (transaccion.id == id)
             {
-                cout << "entro al if " << endl;
-                // Si el ID coincide, no copiar esta transacción al archivo temporal
                 encontrado = true;
             }
             else
             {
-                cout << "entro al else " << endl;
-                // Si el ID no coincide, copiamos la transacción al archivo temporal
                 fwrite(&transaccion, sizeof(Transaction), 1, archivoTemporal);
             }
         }
@@ -186,26 +193,25 @@ void EliminarTransaccionPorID()
 
         if (encontrado)
         {
-            // Reemplazar el archivo original por el archivo temporal
             remove("transactionDB.dat");
             rename("tempTransactionDB.dat", "transactionDB.dat");
             cout << "La transacción ha sido eliminada con éxito." << endl;
         }
         else
         {
-            // Si no se encontró el ID, eliminar el archivo temporal
-            remove("tempDB.dat");
+            remove("tempTransactionDB.dat");
             cout << "No se encontró ninguna transacción con el ID proporcionado." << endl;
         }
     }
-};
+}
 
 int main()
 {
     char user[12];
     char password[9];
     Client cliente;
-    char continuar;
+    int continuar;
+    bool usuarioActivo = true;
 
     cout << "Ingrese su username: " << endl;
     cin >> user;
@@ -217,22 +223,44 @@ int main()
         cout << "Usuario encontrado exitosamente" << endl;
         cout << "Bienvenido!!" << endl;
         cout << "Su saldo inicial en este momento es el siguiente: " << calcularSaldoUsuario(user) << endl;
-        mostrarTransaccion();
-        cout << "Desea realizar una transaccion? (s si desea, n si no.)" << endl;
-        cin >> continuar;
-        switch (continuar)
+        bool sesionActiva = true;
+
+        while (sesionActiva)
         {
-        case 's':
-            GestionarTransaccion(cliente);
-            break;
-        case 'n':
-            cout << "El usuario ha decidido no realizar ninguna transaccion. Salir" << endl;
-            break;
-        case 'e':
-            EliminarTransaccionPorID();
-            break;
-        default:
-            cout << "Caracter invalido." << endl;
+            cout << "Menu principal:" << endl;
+            cout << "1. Ver información de todas las transacciones" << endl;
+            cout << "2. Realizar una transacción" << endl;
+            cout << "3. Eliminar una transacción" << endl;
+            cout << "4. Salir" << endl;
+            cout << "Seleccione una opción: ";
+            cin >> continuar;
+
+            switch (continuar)
+            {
+            case 1:
+                mostrarTransaccion(user);
+                break;
+            case 2:
+                GestionarTransaccion(cliente);
+                usuarioActivo = false;
+                break;
+            case 3:
+                EliminarTransaccionPorID();
+                break;
+            case 4:
+                cout << "Saliendo del programa." << endl;
+                sesionActiva = false;
+                break;
+            default:
+                cout << "Caracter invalido. Por favor, seleccione una opción válida." << endl;
+            }
+
+            if (continuar != 4 && sesionActiva == true)
+            {
+                cout << "Presione cualquier tecla para volver al menú principal..." << endl;
+                cin.ignore();
+                cin.get();
+            }
         }
     }
     else

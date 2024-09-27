@@ -1,6 +1,8 @@
-// ABM de usuarios
-#include <_string.h>
+// ABM de usuarios --> Sami
 #include <iostream>
+#include <cstring>
+#include <_stdio.h>
+#include <_string.h>
 using namespace std;
 
 struct Client
@@ -116,7 +118,7 @@ int checkUser(const char *searchUser)
         {
             if (strcmp(newClient.user, searchUser) == 0)
             {
-                cout << "Estudiante encontrado:" << endl;
+                cout << "Usuario encontrado" << endl;
                 fclose(file);
                 return 1;
             }
@@ -209,8 +211,8 @@ Client registration()
 
 int main()
 {
-
-    registration();
+    checkUser("Admin");
+    // registration();
 
     return 0;
 }
