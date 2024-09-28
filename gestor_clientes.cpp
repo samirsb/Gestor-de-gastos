@@ -84,54 +84,6 @@ char *enterPass()
     return pass1;
 };
 
-int checkDni(int searchDni)
-{
-    FILE *file = fopen("userDB.dat", "rb");
-    if (file != NULL)
-    {
-        Client newClient;
-        while (fread(&newClient, sizeof(Client), 1, file) == 1)
-        {
-            if (newClient.dni == searchDni)
-            {
-                cout << "Cliente ya registrado" << endl;
-                fclose(file);
-                return 1;
-            }
-        }
-        fclose(file);
-    }
-    else
-    {
-        cout << "No se pudo abrir el archivo para lectura" << endl;
-    }
-    return 0;
-}
-
-int checkUser(const char *searchUser)
-{
-    FILE *file = fopen("userDB.dat", "rb");
-    if (file != NULL)
-    {
-        Client newClient;
-        while (fread(&newClient, sizeof(newClient), 1, file) == 1)
-        {
-            if (strcmp(newClient.user, searchUser) == 0)
-            {
-                cout << "Usuario encontrado" << endl;
-                fclose(file);
-                return 1;
-            }
-        }
-        fclose(file);
-    }
-    else
-    {
-        cout << "No se pudo abrir el archivo para lectura." << endl;
-    }
-    return 0;
-}
-
 void saveUserDB(Client newClient)
 {
     Client clients[1];
@@ -168,15 +120,61 @@ void saveTransactionDB(Transaction newTransaction)
     }
 };
 
+int checkDni(int searchDni)
+{
+    FILE *file = fopen("userDB.dat", "rb");
+    if (file == NULL)
+    {
+        return 0;
+    }
+    Client newClient;
+    while (fread(&newClient, sizeof(Client), 1, file) == 1)
+    {
+        if (newClient.dni == searchDni)
+        {
+            cout << "Cliente ya registrado" << endl;
+            fclose(file);
+            return 1;
+        }
+    }
+
+    fclose(file);
+    return 0;
+}
+
+int checkUser(const char *searchUser)
+{
+    FILE *file = fopen("userDB.dat", "rb");
+    if (file == NULL)
+    {
+        return 0;
+    }
+
+    Client newClient;
+    while (fread(&newClient, sizeof(newClient), 1, file) == 1)
+    {
+        if (strcmp(newClient.user, searchUser) == 0)
+        {
+            cout << "El usuario ingresado ya existe." << endl;
+            fclose(file);
+            return 1;
+        }
+    }
+
+    fclose(file);
+    return 0;
+}
+
 Client registration()
 {
     Client newClient;
     Transaction newTransaction;
+    int validUser = 1;
 
     cout << "Ingrese su numero de DNI, sin puntos ni espacios" << endl;
     cin >> newClient.dni;
 
-    if (!checkDni(newClient.dni))
+    if (checkDni(newClient.dni) == 0)
     {
         cout << "Ingrese su nombre" << endl;
         cin.ignore();
@@ -185,15 +183,19 @@ Client registration()
         cout << "Ingrese su apellido" << endl;
         cin.getline(newClient.lastname, sizeof(newClient.lastname));
 
-        cout << "Ingrese su usuario" << endl;
-        cin.getline(newClient.user, sizeof(newClient.user));
+        while (validUser == 1)
+        {
+            cout << "Ingrese su usuario" << endl;
+            cin.getline(newClient.user, sizeof(newClient.user));
+            validUser = checkUser(newClient.user);
+        }
 
         char *password = enterPass();
         strcpy(newClient.pass, password);
 
-        cout << "Su usuario ha sido registrado" << endl
+        cout << "Su usuario ha sido registrado exitosamente" << endl
              << "Por su registro se le otorgara una bonificación de 10.000$" << endl
-             << "Por favor ingrese nuevamente su usuario" << endl;
+             << "Por favor ingrese nuevamente su usuario para confirmar" << endl;
         cin.ignore();
         cin.getline(newTransaction.user, sizeof(newTransaction.user));
 
@@ -211,8 +213,7 @@ Client registration()
 
 int main()
 {
-    checkUser("Admin");
-    // registration();
+    registration();
 
     return 0;
 }

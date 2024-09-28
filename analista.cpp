@@ -59,63 +59,8 @@ int validarUsuarioCliente(const char *UsuarioBuscado)
     return 0;
 }
 
-void listarTransacciones(const char *nombreCliente)
-{
-
-    FILE *file = fopen("userDB.dat", "rb");
-    if (file != NULL)
-    {
-        Transaction transaccionArray[100];
-        int cantTransacciones = 0;
-        leerArchivoTransacciones(transaccionArray, &cantTransacciones, &nombreCliente);
-        // ObtenerTransaccionesXCliente(&nombreCliente, cantTransacciones, transaccionArray);
-        ordenarPorFecha(transaccionArray, cantTransacciones);
-        for (int i = 0; i < cantTransacciones; i++)
-        {
-            cout << i + 1 << ": " << transaccionArray[i].id << "-" << transaccionArray[i].date << "-" << transaccionArray[i].amount << endl;
-            if ((i + 1) % 5 == 0)
-            {
-                cout << "Presione enter para continuar visualizando las transacciones" << endl;
-                cin.ignore();
-            }
-        }
-    }
-    else
-    {
-        cout << "No se pudo abrir el archivo para lectura" << endl;
-    }
-}
-
-void leerArchivoTransacciones(Transaction transacciones[], int *cantTransacciones, char *nombreCliente)
-{
-
-    FILE *archivo = fopen("transactionDB.dat", "rb");
-    if (archivo != NULL)
-    {
-        Transaction transTemp; // Variable temporal para leer transacciones
-        *cantTransacciones = 0;
-
-        while (fread(&transTemp, sizeof(Transaction), 1, archivo) == 1)
-        {
-            // Comparar el usuario de la transacción con el nombreCliente
-            if (strcmp(transTemp.user, nombreCliente) == 0)
-            {
-                // Guardar la transacción en el array
-                cout << "entro al if" << endl;
-                cout << cantTransacciones << endl;
-                transacciones[*cantTransacciones] = transTemp;
-                (*cantTransacciones)++;
-            }
-        }
-
-        fclose(archivo);
-    }
-    else
-    {
-        cout << "Error al abrir el archivo." << endl;
-        return;
-    }
-}
+// - Listar las transacciones de un cliente ordenadas por fecha con paginas de a 5 transacciones mostrando id,
+// fecha y monto.
 
 void ordenarPorFecha(Transaction transacciones[], int cantTransacciones)
 {
@@ -137,6 +82,163 @@ void ordenarPorFecha(Transaction transacciones[], int cantTransacciones)
         transacciones[i] = transacciones[minIndex];
         transacciones[minIndex] = temp;
     }
+}
+
+void listarTransacciones(const char *nombreCliente)
+{
+    Transaction transTemp;
+    Transaction transaccionArray[100];
+    int cantTransacciones = 0;
+    FILE *archivo = fopen("transactionDB.dat", "rb");
+    if (archivo != NULL)
+    {
+        while (fread(&transTemp, sizeof(Transaction), 1, archivo) == 1)
+        {
+            if (strcmp(transTemp.user, nombreCliente) == 0)
+            {
+                transaccionArray[cantTransacciones] = transTemp;
+                cantTransacciones++;
+            }
+        }
+        fclose(archivo);
+    }
+    else
+    {
+        cout << "Error al abrir el archivo." << endl;
+        return;
+    }
+    ordenarPorFecha(transaccionArray, cantTransacciones);
+    for (int i = 0; i < cantTransacciones; i++)
+    {
+        cout << i + 1 << ": " << transaccionArray[i].id << " - " << transaccionArray[i].date << " - " << transaccionArray[i].amount << endl;
+        if ((i + 1) % 5 == 0)
+        {
+            cout << "Presione enter para continuar visualizando las transacciones" << endl;
+            cin.ignore();
+        }
+    }
+}
+
+// - Listar la cantidad de ingresos y egresos por mes de un cliente.
+void imprimirIngresosEgresosPorMes(Transaction transacciones[], int cantTransacciones)
+{
+    int ingresosMes = 0;
+    int egresosMes = 0;
+    int mesActual = 0;
+
+    cout << "Ingresos y Egresos del cliente: " << transacciones->user << endl;
+    for (int i = 0; i < cantTransacciones; i++)
+    {
+        int mesTransaccion = (transacciones[i].date / 100) % 100;
+
+        if (mesActual != mesTransaccion && mesActual != 0)
+        {
+            cout << "En el mes " << mesActual << "El total de ingreso fue de: " << "El total de egresos fue de: " << egresosMes << endl;
+            ingresosMes = 0;
+            egresosMes = 0;
+        }
+        mesActual = mesTransaccion;
+
+        if (transacciones[i].amount > 0)
+        {
+            ingresosMes += transacciones[i].amount;
+        }
+        else
+        {
+            egresosMes += transacciones[i].amount;
+        }
+    }
+    cout << "En el mes " << mesActual << "El total de ingreso fue de: " << "El total de egresos fue de: " << egresosMes << endl;
+}
+
+void IngresosyEgresos(const char *nombreCliente)
+{
+
+    Transaction transTemp;
+    Transaction transaccionArray[100];
+    int cantTransacciones = 0;
+    FILE *archivo = fopen("transactionDB.dat", "rb");
+    if (archivo != NULL)
+    {
+        while (fread(&transTemp, sizeof(Transaction), 1, archivo) == 1)
+        {
+            if (strcmp(transTemp.user, nombreCliente) == 0)
+            {
+                transaccionArray[cantTransacciones] = transTemp;
+                cantTransacciones++;
+            }
+        }
+        fclose(archivo);
+    }
+    else
+    {
+        cout << "Error al abrir el archivo." << endl;
+        return;
+    }
+    ordenarPorFecha(transaccionArray, cantTransacciones);
+    imprimirIngresosEgresosPorMes(transaccionArray, cantTransacciones);
+}
+
+// - Mostrar el username del cliente, la fecha y monto de la transacción de monto máximo de todos los clientes
+
+void mostrarClientesMaximo()
+{
+
+    Transaction transTemp;
+    Transaction transMax[100];
+    int contadorClientes = 0;
+
+    FILE *archivo = fopen("transactionDB.dat", "rb");
+    if (archivo != NULL)
+    {
+
+        while (fread(&transTemp, sizeof(Transaction), 1, archivo) == 1)
+        {
+            bool existeCliente = false;
+            for (int i = 0; i < contadorClientes; i++)
+            {
+                if (strcmp(transMax[i].user, transTemp.user) == 0)
+                {
+
+                    if (transTemp.amount > transMax[i].amount)
+                    {
+                        transMax[i].amount = transTemp.amount;
+                        transMax[i].date = transTemp.date;
+                    }
+                    existeCliente = true;
+                    break;
+                }
+            }
+            if (!existeCliente)
+            {
+                strcpy(transMax[contadorClientes].user, transTemp.user);
+                transMax[contadorClientes].amount = transTemp.amount;
+                transMax[contadorClientes].date = transTemp.date;
+                contadorClientes++;
+            }
+        }
+        fclose(archivo);
+
+        cout << "Transacciones máximas por cliente:" << endl;
+        for (int i = 0; i < contadorClientes; i++)
+        {
+            cout << "El monto maximo de " << transMax[i].user << "con fecha: " << transMax[i].date << "es de: " << transMax[i].amount << endl;
+        }
+    }
+    else
+    {
+        cout << "No se pudo abrir el archivo para lectura." << endl;
+    }
+}
+
+// - Mostrar el cliente que más ingresos tuvo en los últimos 30 días.
+
+void mayorIngresosUltimoMes()
+{
+
+    char fechaActual;
+    cout << "Ingrese la fecha actual como AAAAMMDD: " << endl;
+    cin >> fechaActual;
 }
 
 int main()
@@ -179,19 +281,18 @@ int main()
             cin >> nombreCliente;
             if (validarUsuarioCliente(nombreCliente) == 1)
             {
-                // IngresosyEgresos(nombreCliente);
+                IngresosyEgresos(nombreCliente);
             }
             else
             {
-
                 cout << "El cliente ingresado no existe." << endl;
             }
             break;
         case '3':
-            // mostrarClientesMaximo();
+            mostrarClientesMaximo();
             break;
         case '4':
-            // FUNCION;
+            mayorIngresosUltimoMes();
             break;
         default:
             cout << "Caracter invalido." << endl;
