@@ -136,7 +136,7 @@ void imprimirIngresosEgresosPorMes(Transaction transacciones[], int cantTransacc
 
         if (mesActual != mesTransaccion && mesActual != 0)
         {
-            cout << "En el mes " << mesActual << " el total de ingreso fue de: " << egresosMes << endl;
+            cout << "En el mes " << mesActual << " El total de ingreso fue de: " << ingresosMes << " / El total de egresos fue de: " << egresosMes << endl;
             ingresosMes = 0;
             egresosMes = 0;
         }
@@ -151,12 +151,11 @@ void imprimirIngresosEgresosPorMes(Transaction transacciones[], int cantTransacc
             egresosMes += transacciones[i].amount;
         }
     }
-    cout << "En el mes " << mesActual << " el total de ingreso fue de: " << egresosMes << endl;
+    cout << "En el mes " << mesActual << " El total de ingreso fue de: " << ingresosMes << "El total de egresos fue de: " << egresosMes << endl;
 }
 
 void IngresosyEgresos(const char *nombreCliente)
 {
-
     Transaction transTemp;
     Transaction transaccionArray[100];
     int cantTransacciones = 0;
@@ -181,7 +180,6 @@ void IngresosyEgresos(const char *nombreCliente)
     ordenarPorFecha(transaccionArray, cantTransacciones);
     imprimirIngresosEgresosPorMes(transaccionArray, cantTransacciones);
 }
-
 // - Mostrar el username del cliente, la fecha y monto de la transacción de monto máximo de todos los clientes
 
 void mostrarClientesMaximo()
@@ -320,54 +318,67 @@ int main()
 
     if (validarUsuarioAdmin(user, password) == 1)
     {
-        cout << "MENU:" << endl;
-        cout << "1: Si desea visualizar las transacciones de un cliente ordenadas por fecha" << endl;
-        cout << "2: Si desea visualizar la cantidad de ingresos y egresos del ultimo mes de un cliente" << endl;
-        cout << "3: Si desea visualizar la transacción de monto maximo de todos los clientes:" << endl;
-        cout << "4: Si desea visualizar el cliente que más ingresos tuvo en los ultimos 30 dias:" << endl;
-        cin >> continuar;
-        switch (continuar)
+        bool sesionActiva = true;
+        while (sesionActiva)
         {
-        case '1':
-            cout << "Ingrese el usuario del cliente para visualizar sus transacciones:" << endl;
-            cin >> nombreCliente;
-            if (validarUsuarioCliente(nombreCliente) == 1)
+            cout << "MENU:" << endl;
+            cout << "1: Si desea visualizar las transacciones de un cliente ordenadas por fecha" << endl;
+            cout << "2: Si desea visualizar la cantidad de ingresos y egresos del ultimo mes de un cliente" << endl;
+            cout << "3: Si desea visualizar la transacción de monto maximo de todos los clientes:" << endl;
+            cout << "4: Si desea visualizar el cliente que más ingresos tuvo en los ultimos 30 dias:" << endl;
+            cout << "5: Salir." << endl;
+            cin >> continuar;
+            switch (continuar)
             {
-                listarTransacciones(nombreCliente);
+            case '1':
+                cout << "Ingrese el usuario del cliente para visualizar sus transacciones:" << endl;
+                cin >> nombreCliente;
+                if (validarUsuarioCliente(nombreCliente) == 1)
+                {
+                    listarTransacciones(nombreCliente);
+                }
+                else
+                {
+                    cout << "El usuario ingresado no existe." << endl;
+                }
+                sesionActiva = false;
+                break;
+            case '2':
+                cout << "Ingrese el usuario del cliente para visualizar sus transacciones:" << endl;
+                cin >> nombreCliente;
+                if (validarUsuarioCliente(nombreCliente) == 1)
+                {
+                    IngresosyEgresos(nombreCliente);
+                }
+                else
+                {
+                    cout << "El usuario ingresado no existe." << endl;
+                }
+                sesionActiva = false;
+                break;
+            case '3':
+                mostrarClientesMaximo();
+                sesionActiva = false;
+                break;
+            case '4':
+                mayorIngresosUltimoMes();
+                sesionActiva = false;
+                break;
+            case '5':
+                cout << "Saliendo del programa." << endl;
+                sesionActiva = false;
+                break;
+            default:
+                cout << "Caracter invalido." << endl;
+                break;
             }
-            else
-            {
-                cout << "El usuario ingresado no existe." << endl;
-            }
-            break;
-        case '2':
-            cout << "Ingrese el usuario del cliente para visualizar sus transacciones:" << endl;
-            cin >> nombreCliente;
-            if (validarUsuarioCliente(nombreCliente) == 1)
-            {
-                IngresosyEgresos(nombreCliente);
-            }
-            else
-            {
-                cout << "El usuario ingresado no existe." << endl;
-            }
-            break;
-        case '3':
-            mostrarClientesMaximo();
-            break;
-        case '4':
-            mayorIngresosUltimoMes();
-            break;
-        default:
-            cout << "Caracter invalido." << endl;
-            break;
-        }
 
-        if (continuar != 4)
-        {
-            cout << "Presione cualquier tecla para volver al menú principal." << endl;
-            cin.ignore();
-            cin.get();
+            if (continuar != 5 && sesionActiva == true)
+            {
+                cout << "Presione cualquier tecla para volver al menú principal..." << endl;
+                cin.ignore();
+                cin.get();
+            }
         }
     }
     else
