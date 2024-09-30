@@ -94,7 +94,7 @@ void saveUserDB(Client newClient)
     {
         fwrite(clients, sizeof(Client), 1, file);
         fclose(file);
-        cout << "Archivo creado exitosamente." << endl;
+        cout << "Registro de usuario exitoso" << endl;
     }
     else
     {
@@ -112,7 +112,7 @@ void saveTransactionDB(Transaction newTransaction)
     {
         fwrite(transactions, sizeof(Transaction), 1, file);
         fclose(file);
-        cout << "Archivo creado exitosamente." << endl;
+        cout << "Registro de transaccion exitosa" << endl;
     }
     else
     {
@@ -193,17 +193,17 @@ Client registration()
         char *password = enterPass();
         strcpy(newClient.pass, password);
 
-        cout << "Su usuario ha sido registrado exitosamente" << endl
-             << "Por su registro se le otorgara una bonificación de 10.000$" << endl
+        saveUserDB(newClient);
+        cout << "Por su registro se le otorgara una bonificación de 10.000$" << endl
              << "Por favor ingrese nuevamente su usuario para confirmar" << endl;
         cin.ignore();
         cin.getline(newTransaction.user, sizeof(newTransaction.user));
 
         newTransaction.id = 1;
         newTransaction.amount = 10000;
-        newTransaction.date = 22092024;
+        cout << "Ingrese la fecha de hoy con formato AAAAMMDD" << endl;
+        cin >> newTransaction.date;
 
-        saveUserDB(newClient);
         saveTransactionDB(newTransaction);
 
         return newClient;

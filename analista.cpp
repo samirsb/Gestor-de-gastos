@@ -22,6 +22,12 @@ struct Transaction
     int date;
 };
 
+struct ClientMaxAmount
+{
+    char user[12];
+    int amount;
+};
+
 int validarUsuarioAdmin(char *UsuarioBuscado, char *PasswordBuscada)
 {
 
@@ -64,10 +70,6 @@ int validarUsuarioCliente(const char *UsuarioBuscado)
 
 void ordenarPorFecha(Transaction transacciones[], int cantTransacciones)
 {
-
-    cout << "Entro en ordenar fecha" << endl;
-    cout << cantTransacciones << endl;
-
     for (int i = 0; i < cantTransacciones - 1; i++)
     {
         int minIndex = i;
@@ -120,6 +122,7 @@ void listarTransacciones(const char *nombreCliente)
 }
 
 // - Listar la cantidad de ingresos y egresos por mes de un cliente.
+
 void imprimirIngresosEgresosPorMes(Transaction transacciones[], int cantTransacciones)
 {
     int ingresosMes = 0;
@@ -133,7 +136,7 @@ void imprimirIngresosEgresosPorMes(Transaction transacciones[], int cantTransacc
 
         if (mesActual != mesTransaccion && mesActual != 0)
         {
-            cout << "En el mes " << mesActual << "El total de ingreso fue de: " << "El total de egresos fue de: " << egresosMes << endl;
+            cout << "En el mes " << mesActual << " el total de ingreso fue de: " << egresosMes << endl;
             ingresosMes = 0;
             egresosMes = 0;
         }
@@ -148,7 +151,7 @@ void imprimirIngresosEgresosPorMes(Transaction transacciones[], int cantTransacc
             egresosMes += transacciones[i].amount;
         }
     }
-    cout << "En el mes " << mesActual << "El total de ingreso fue de: " << "El total de egresos fue de: " << egresosMes << endl;
+    cout << "En el mes " << mesActual << " el total de ingreso fue de: " << egresosMes << endl;
 }
 
 void IngresosyEgresos(const char *nombreCliente)
@@ -222,7 +225,7 @@ void mostrarClientesMaximo()
         cout << "Transacciones máximas por cliente:" << endl;
         for (int i = 0; i < contadorClientes; i++)
         {
-            cout << "El monto maximo de " << transMax[i].user << "con fecha: " << transMax[i].date << "es de: " << transMax[i].amount << endl;
+            cout << "El monto maximo del usuario" << transMax[i].user << " con fecha: " << transMax[i].date << "es de: " << transMax[i].amount << endl;
         }
     }
     else
@@ -239,6 +242,67 @@ void mayorIngresosUltimoMes()
     char fechaActual;
     cout << "Ingrese la fecha actual como AAAAMMDD: " << endl;
     cin >> fechaActual;
+
+    Transaction transTemp;
+    ClientMaxAmount maxIngreso[100];
+    int contadorClientes = 0;
+
+    FILE *archivo = fopen("transactionDB.dat", "rb");
+    if (archivo != NULL)
+    {
+        while (fread(&transTemp, sizeof(Transaction), 1, archivo) == 1)
+        {
+            // Verificar si es un ingreso y si está dentro de los últimos 30 días
+            if (transTemp.amount > 0 && (fechaActual - transTemp.date) < 30)
+            {
+                bool existeCliente = false;
+
+                for (int i = 0; i < contadorClientes; i++)
+                {
+                    if (strcmp(maxIngreso[i].user, transTemp.user) == 0)
+                    {
+                        // Si el cliente ya existe, sumar los ingresos
+                        maxIngreso[i].amount += transTemp.amount;
+                        existeCliente = true;
+                        break; // Salimos del bucle si encontramos al cliente
+                    }
+                }
+
+                // Si el cliente no existe, agregarlo
+                if (!existeCliente)
+                {
+                    strcpy(maxIngreso[contadorClientes].user, transTemp.user);
+                    maxIngreso[contadorClientes].amount = transTemp.amount;
+                    contadorClientes++;
+                }
+            }
+        }
+        fclose(archivo);
+    }
+    else
+    {
+        cout << "No se pudo abrir el archivo para lectura." << endl;
+    }
+
+    int maxIngresos = 0;
+    char clientMaxIngresos[12];
+
+    for (int i = 0; i < contadorClientes; i++)
+    {
+        if (maxIngreso[i].amount > maxIngresos)
+        {
+            maxIngresos = maxIngreso[i].amount;
+            strcpy(clientMaxIngresos, maxIngreso[i].user);
+        }
+    }
+    if (maxIngresos > 0)
+    {
+        cout << "El cliente con mayor ingresos en los ultimos 30 dias es: " << clientMaxIngresos << "con un monto total de: " << maxIngresos << "." << endl;
+    }
+    else
+    {
+        cout << "No se encontraron ingresos en los últimos 30 días." << endl;
+    }
 }
 
 int main()
@@ -248,6 +312,7 @@ int main()
     char continuar;
     char nombreCliente[15];
 
+    cout << "Bienvenido Usuario Administrador" << endl;
     cout << "Ingrese su username: " << endl;
     cin >> user;
     cout << "Ingrese su clave: " << endl;
@@ -255,7 +320,6 @@ int main()
 
     if (validarUsuarioAdmin(user, password) == 1)
     {
-        cout << "Bienvenido Usuario Administrador" << endl;
         cout << "MENU:" << endl;
         cout << "1: Si desea visualizar las transacciones de un cliente ordenadas por fecha" << endl;
         cout << "2: Si desea visualizar la cantidad de ingresos y egresos del ultimo mes de un cliente" << endl;
@@ -265,7 +329,7 @@ int main()
         switch (continuar)
         {
         case '1':
-            cout << "Ingrese el nombre del cliente para visualizar sus transacciones:" << endl;
+            cout << "Ingrese el usuario del cliente para visualizar sus transacciones:" << endl;
             cin >> nombreCliente;
             if (validarUsuarioCliente(nombreCliente) == 1)
             {
@@ -273,11 +337,11 @@ int main()
             }
             else
             {
-                cout << "El cliente ingresado no existe." << endl;
+                cout << "El usuario ingresado no existe." << endl;
             }
             break;
         case '2':
-            cout << "Ingrese el nombre del cliente para visualizar sus transacciones:" << endl;
+            cout << "Ingrese el usuario del cliente para visualizar sus transacciones:" << endl;
             cin >> nombreCliente;
             if (validarUsuarioCliente(nombreCliente) == 1)
             {
@@ -285,7 +349,7 @@ int main()
             }
             else
             {
-                cout << "El cliente ingresado no existe." << endl;
+                cout << "El usuario ingresado no existe." << endl;
             }
             break;
         case '3':
@@ -298,10 +362,17 @@ int main()
             cout << "Caracter invalido." << endl;
             break;
         }
+
+        if (continuar != 4)
+        {
+            cout << "Presione cualquier tecla para volver al menú principal." << endl;
+            cin.ignore();
+            cin.get();
+        }
     }
     else
     {
-        cout << "El usuario ingresado no tiene permisos de administrador" << endl;
+        cout << "El usuario ingresado no tiene permisos de administrador." << endl;
     }
 
     return 0;
